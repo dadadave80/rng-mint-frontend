@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Analytics } from "@vercel/analytics/next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
@@ -21,6 +22,7 @@ export default function RootLayout({
           <div className="flex flex-col h-screen mx-auto">
             <Navbar />
             {children}
+            <Analytics />
             <Footer />
           </div>
         </Providers>
