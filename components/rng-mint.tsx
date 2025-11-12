@@ -89,7 +89,7 @@ export function Mint() {
             },
             ]);
 
-            setMintedAmount(log.args.amount as bigint);
+            setMintedAmount(((log.args.amount as bigint) % (BigInt(1000) * (BigInt(10) ** BigInt(18)))) + BigInt(1));
             setStatusSteps([]);
             setShowModal(false);
             setMintAddress("");
