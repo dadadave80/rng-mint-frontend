@@ -4,12 +4,7 @@ import { RngMintModal, StatusStep } from "@/components/rng-mint-modal";
 import { RngMintABI, RngMintAddress } from "@/lib/rng-mint";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useState } from "react";
-import {
-  getContract,
-  isAddress,
-  parseEventLogs,
-  publicActions,
-} from "viem";
+import { getContract, isAddress, parseEventLogs, publicActions } from "viem";
 import { useAccount, useWalletClient } from "wagmi";
 
 export function Mint() {
@@ -34,17 +29,17 @@ export function Mint() {
 
     // Initialize the rngmint contract
     const rngmint = getContract({
-        abi: RngMintABI,
-        address: RngMintAddress,
-        client: walletClient,
+      abi: RngMintABI,
+      address: RngMintAddress,
+      client: walletClient,
     });
 
     // Add a status step to the status steps array
     setStatusSteps([
-        {
+      {
         step: "Confirming transaction",
         timestamp: new Date().toLocaleTimeString(),
-        },
+      },
     ]);
 
     // Call the mintTo function on the rngmint contract
@@ -52,52 +47,56 @@ export function Mint() {
 
     // Wait for the transaction to be mined
     const mintToReceipt = await extendedClient.waitForTransactionReceipt({
-        hash: mintToTx,
+      hash: mintToTx,
     });
 
     // Add a status step to the status steps array
     setStatusSteps((prev) => [
-        ...prev,
-        { step: "Mint Requested", timestamp: new Date().toLocaleTimeString() },
+      ...prev,
+      { step: "Mint Requested", timestamp: new Date().toLocaleTimeString() },
     ]);
 
     // Extract the MintRequested log from the transaction receipt
     // so we know the nonce of the game
     const mintRequestedLog = parseEventLogs({
-        abi: rngmint.abi,
-        logs: mintToReceipt.logs,
+      abi: rngmint.abi,
+      logs: mintToReceipt.logs,
     }).find((log) => log.eventName === "MintRequested")!;
 
     // Create an event watcher on the contract looking for the Minted event
     // with a matching nonce
     const unwatch = extendedClient.watchContractEvent({
-        fromBlock: mintToReceipt.blockNumber,
-        address: rngmint.address,
-        abi: rngmint.abi,
-        eventName: "Minted",        
-        onLogs: async (logs) => {
+      fromBlock: mintToReceipt.blockNumber,
+      address: rngmint.address,
+      abi: rngmint.abi,
+      eventName: "Minted",
+      onLogs: async (logs) => {
         for (const log of logs) {
-            // If we see a MintRequested event for a different nonce, ignore and move on
-            if (log.args.id !== mintRequestedLog.args.requestId) continue;
+          // If we see a MintRequested event for a different nonce, ignore and move on
+          if (log.args.id !== mintRequestedLog.args.requestId) continue;
 
-            // Add a status step to the status steps array
-            setStatusSteps((prev) => [
+          // Add a status step to the status steps array
+          setStatusSteps((prev) => [
             ...prev,
             {
-                step: `Minted ${log.args.amount?.toString?.() ?? log.args.amount} tokens`,
-                timestamp: new Date().toLocaleTimeString(),
+              step: `Minted ${
+                log.args.amount?.toString?.() ?? log.args.amount
+              } tokens`,
+              timestamp: new Date().toLocaleTimeString(),
             },
-            ]);
+          ]);
 
-            setMintedAmount(((log.args.amount as bigint) % (BigInt(1000) * (BigInt(10) ** BigInt(18)))) + BigInt(1));
-            setStatusSteps([]);
-            setShowModal(false);
-            setMintAddress("");
-            unwatch();
+          setMintedAmount(
+            (log.args.amount as bigint) / BigInt(10) ** BigInt(18)
+          );
+          setStatusSteps([]);
+          setShowModal(false);
+          setMintAddress("");
+          unwatch();
         }
-        },
+      },
     });
-};
+  };
 
   const closeModal = () => {
     setShowModal(false);
@@ -129,7 +128,9 @@ export function Mint() {
               Lucky Mint!
             </button>
             {mintedAmount !== null && (
-              <p className="text-sm text-gray-700">Minted amount: {mintedAmount.toString()}</p>
+              <p className="text-sm text-gray-700">
+                Minted amount: {mintedAmount.toString()}
+              </p>
             )}
           </div>
         ) : (
